@@ -1,0 +1,16 @@
+<view class="camera-page">
+  <image
+    src="{{frameSrc}}"
+    mode="aspectFit"
+    binderror="onFrameError"
+    bindtap="handleEmptyTap"
+    style="width: 100%; height: 420rpx; background: #000;"
+  />
+
+  <view class="stream-status">{{streamState}}</view>
+
+  <view class="controls">
+    <button bindtap="togglePlay">{{isPlaying ? '暂停' : '播放'}}</button>
+    <button bindtap="reconnect">重连</button>
+  </view>
+</view>

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ESP32 摄像头监控预览</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f7f9;
+      color: #1f2937;
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    p {
+      margin: 0 0 18px;
+      color: #4b5563;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+      color: #374151;
+    }
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 15px;
+      background: white;
+    }
+    button {
+      align-self: end;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 15px;
+      color: white;
+      background: #2563eb;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #475569;
+    }
+    .screen {
+      overflow: hidden;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #111827;
+      aspect-ratio: 16 / 9;
+      display: grid;
+      place-items: center;
+    }
+    .screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .status {
+      margin-top: 12px;
+      min-height: 22px;
+      color: #4b5563;
+    }
+    @media (max-width: 760px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>ESP32 摄像头监控预览</h1>
+  <p>输入摄像头编号和观看密钥后，通过 WebSocket 实时查看 JPEG 帧。</p>
+  <section class="toolbar">
+    <label>
+      摄像头编号
+      <input id="cameraId" value="room-1" autocomplete="off">
+    </label>
+    <label>
+      观看密钥
+      <input id="viewerToken" value="watch-123456" autocomplete="off">
+    </label>
+    <button id="mjpegBtn">MJPEG 视频预览</button>
+    <button id="wsBtn" class="secondary">WebSocket 调试</button>
+  </section>
+  <section class="screen">
+    <img id="preview" alt="摄像头画面">
+  </section>
+  <div id="status" class="status">尚未连接</div>
+</main>
+<script>
+  const cameraIdInput = document.getElementById('cameraId');
+  const viewerTokenInput = document.getElementById('viewerToken');
+  const preview = document.getElementById('preview');
+  const statusText = document.getElementById('status');
+  const mjpegBtn = document.getElementById('mjpegBtn');
+  const wsBtn = document.getElementById('wsBtn');
+
+  let socket;
+  let activeObjectUrl;
+  let pendingObjectUrl;
+  let frameCount = 0;
+  let shownCount = 0;
+  let startedAt = 0;
+
+  mjpegBtn.addEventListener('click', () => {
+    closeSocket();
+    cleanupUrls();
+    frameCount = 0;
+    shownCount = 0;
+    startedAt = Date.now();
+
+    const cameraId = encodeURIComponent(cameraIdInput.value.trim());
+    const token = encodeURIComponent(viewerTokenInput.value.trim());
+    preview.onload = null;
+    preview.src = `/api/cameras/${cameraId}/mjpeg?token=${token}&_=${Date.now()}`;
+    statusText.textContent = '已切换到 MJPEG 视频预览，流畅度取决于硬件上传 FPS';
+  });
+
+  wsBtn.addEventListener('click', () => {
+    closeSocket();
+    startWebSocketPreview();
+  });
+
+  function startWebSocketPreview() {
+    if (socket) {
+      socket.close();
+    }
+    cleanupUrls();
+    frameCount = 0;
+    shownCount = 0;
+    startedAt = Date.now();
+
+    const cameraId = encodeURIComponent(cameraIdInput.value.trim());
+    const token = encodeURIComponent(viewerTokenInput.value.trim());
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    socket = new WebSocket(`${protocol}//${location.host}/ws/cameras/${cameraId}?token=${token}`);
+    socket.binaryType = 'blob';
+
+    socket.onopen = () => {
+      statusText.textContent = '已连接，等待摄像头上传画面';
+    };
+    socket.onmessage = (event) => {
+      frameCount += 1;
+      const jpegBlob = event.data instanceof Blob
+        ? new Blob([event.data], { type: 'image/jpeg' })
+        : new Blob([event.data], { type: 'image/jpeg' });
+      const nextUrl = URL.createObjectURL(jpegBlob);
+      if (pendingObjectUrl) {
+        URL.revokeObjectURL(pendingObjectUrl);
+      }
+      pendingObjectUrl = nextUrl;
+      preview.onload = () => {
+        shownCount += 1;
+        if (activeObjectUrl) {
+          URL.revokeObjectURL(activeObjectUrl);
+        }
+        activeObjectUrl = pendingObjectUrl;
+        pendingObjectUrl = null;
+        updateStatus();
+      };
+      preview.src = nextUrl;
+      updateStatus();
+    };
+    socket.onclose = () => {
+      statusText.textContent = '连接已关闭';
+    };
+    socket.onerror = () => {
+      statusText.textContent = '连接出错，请检查地址、观看密钥或服务状态';
+    };
+  }
+
+  function updateStatus() {
+    const seconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+    const fps = (shownCount / seconds).toFixed(1);
+    statusText.textContent = `已接收 ${frameCount} 帧，已显示 ${shownCount} 帧，约 ${fps} FPS`;
+  }
+
+  function cleanupUrls() {
+    if (activeObjectUrl) {
+      URL.revokeObjectURL(activeObjectUrl);
+      activeObjectUrl = null;
+    }
+    if (pendingObjectUrl) {
+      URL.revokeObjectURL(pendingObjectUrl);
+      pendingObjectUrl = null;
+    }
+  }
+
+  function closeSocket() {
+    if (socket) {
+      socket.close();
+      socket = null;
+    }
+  }
+</script>
+</body>
+</html>

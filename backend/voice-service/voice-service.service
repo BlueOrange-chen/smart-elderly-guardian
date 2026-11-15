@@ -1,0 +1,19 @@
+[Unit]
+Description=Smart Elderly AI Voice Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=healthapp
+Group=healthapp
+WorkingDirectory=/opt/health-platform/voice_service
+EnvironmentFile=/etc/voice-service.env
+ExecStart=/opt/health-platform/venv/bin/gunicorn --workers 2 --threads 4 --timeout 180 --bind 127.0.0.1:8010 app:app
+Restart=on-failure
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

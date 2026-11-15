@@ -1,0 +1,20 @@
+[Unit]
+Description=Smart Elderly Health Platform
+After=network.target mysqld.service
+
+[Service]
+Type=simple
+User=codex
+Group=codex
+WorkingDirectory=/opt/health-platform
+EnvironmentFile=/etc/health-platform.env
+ExecStart=/opt/health-platform/venv/bin/gunicorn --workers 2 --threads 4 --timeout 45 --bind 0.0.0.0:8000 app:app
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

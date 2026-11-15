@@ -1,0 +1,15 @@
+<view class="camera-page">
+  <video
+    src="{{cameraHlsUrl}}"
+    autoplay
+    muted
+    controls="{{false}}"
+    object-fit="contain"
+    binderror="onVideoError"
+    bindwaiting="onVideoWaiting"
+    bindplay="onVideoPlay"
+    style="width: 100%; height: 420rpx; background: #000;"
+  />
+
+  <view class="stream-status">{{videoState}}</view>
+</view>

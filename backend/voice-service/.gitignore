@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.wav
+*.mp3
+*.ogg
+*.opus
+*.m4a
+.env
+*.env
+!voice-service.env.example
+!dashscope.env.snippet
+.venv/
+venv/
+.pytest_cache/
+.coverage

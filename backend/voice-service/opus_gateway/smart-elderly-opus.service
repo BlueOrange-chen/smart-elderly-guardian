@@ -1,0 +1,24 @@
+[Unit]
+Description=Smart Elderly WebSocket Opus Voice Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=smartvoice
+Group=smartvoice
+WorkingDirectory=/opt/smart-elderly-opus
+EnvironmentFile=/etc/smart-elderly-voice.env
+EnvironmentFile=-/etc/smart-elderly-opus.env
+Environment=OPUS_VOICE_PORT=8011
+ExecStart=/opt/smart-elderly-opus/venv/bin/python /opt/smart-elderly-opus/app.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/smart-elderly-opus
+
+[Install]
+WantedBy=multi-user.target

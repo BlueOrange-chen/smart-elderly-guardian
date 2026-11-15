@@ -1,0 +1,50 @@
+# Secrets: commit examples, never real credentials
+.env
+.env.*
+!.env.example
+!*env.example
+*.pem
+*.key
+.server_access/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Java / Maven
+target/
+*.class
+*.jar
+
+# Node / WeChat DevTools
+node_modules/
+miniprogram_npm/
+project.private.config.json
+
+# IDE and OS
+.idea/
+.vscode/
+.vs/
+*.iml
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Logs, generated files, local tools and large media
+*.log
+tmp/
+temp/
+output/
+.doc_work/
+.codex_pydeps/
+ffmpeg-*-essentials_build/
+*.zip
+*.7z
+*.part*
+*.seg*
+*.mp4
+~$*

@@ -1,0 +1,17 @@
+[Unit]
+Description=ESP32 Camera Stream Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=www-data
+WorkingDirectory=/opt/esp32-camera-stream-server
+Environment=SERVER_PORT=8090
+Environment=STREAM_INGEST_TOKEN=replace-with-ingest-token
+Environment=STREAM_VIEWER_TOKEN=replace-with-viewer-token
+ExecStart=/usr/bin/java -jar /opt/esp32-camera-stream-server/esp32-camera-stream-server.jar
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
