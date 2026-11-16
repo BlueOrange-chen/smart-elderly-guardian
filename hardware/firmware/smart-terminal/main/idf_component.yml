@@ -1,0 +1,8 @@
+## 组件依赖：由 ESP-IDF Component Manager 自动下载到 managed_components/（不入库）
+## 版本与实测环境一致（ESP-IDF v5.2.2，2026-08 构建记录）
+dependencies:
+  idf: ">=5.2"
+  espressif/esp_audio_codec: "^2.6.2"      # Opus 编解码（esp_opus_enc / esp_opus_dec）
+  espressif/esp_websocket_client: "^1.8.0" # 语音双向流 WebSocket
+  espressif/esp_jpeg: "^1.3.1"             # 摄像头 JPEG 处理
+  espressif/esp32-camera: "^2.0.0"         # OV2640 驱动
