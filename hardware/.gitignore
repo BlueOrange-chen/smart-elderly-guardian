@@ -1,0 +1,64 @@
+# 硬件目录专属忽略规则
+# 根 .gitignore 已经覆盖 .env / target / node_modules 等，
+# 这里只补充固件与结构设计相关的产物，避免误提交编译结果。
+
+# ---------- PlatformIO ----------
+.pio/
+.pioenvs/
+.piolibdeps/
+.pio/build/
+
+# ---------- ESP-IDF ----------
+build/
+sdkconfig
+sdkconfig.old
+managed_components/
+compile_commands.json
+# 注意：dependencies.lock 建议提交（保证别人下载到相同的组件版本）
+*.bin
+*.elf
+*.map
+*.hex
+bootloader/
+partition_table/
+flash_args
+
+# ---------- Arduino / 通用编译产物 ----------
+*.o
+*.a
+*.d
+*.su
+*.lst
+*.moc
+*.dSYM/
+
+# ---------- 本地配置（含真实 Wi-Fi / Token / 服务器地址）----------
+config.local.h
+config.local.*
+secrets.h
+credentials.h
+wifi_config.h
+*.local.ini
+
+# ---------- 采集到的真实数据（严禁入库）----------
+captures/
+recordings/
+*.wav
+*.raw
+*.opus
+*.h264
+*.jpg
+*.jpeg
+!enclosure/**/*.jpg
+
+# ---------- 外壳/结构的大二进制（要留版本请在 PR 描述里说明）----------
+enclosure/stl/*.step
+enclosure/stl/*.3mf
+enclosure/stl/*.f3d
+*.FCStd1
+
+# ---------- 编辑器 ----------
+.vscode/
+*.code-workspace
+.clangd/
+.cache/
